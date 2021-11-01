@@ -68,6 +68,29 @@ class FinalizarLeilaoServiceTest {
         Mockito.verify(enviadorDeEmails).enviarEmailVencedorLeilao(lanceVencedor);
     }
 
+    @Test
+    void naoDeveriaEnviarEmailParaVencedorDoLeilaoCasoOcorraErroAoSalvarLeilao() {
+        List<Leilao> leiloes = listaDeLeiloesParaOMock();
+        // quando o método buscarLeiloesExpirados() for chamado, então o seu retorno será
+        // a lista de leiloes que criei nessa própria classe de teste, que chamei de: listaDeLeiloesParaOMock
+        // e que atribui a variável leiloes
+        Mockito.when(leilaoDao.buscarLeiloesExpirados()).thenReturn(leiloes);
+
+        // Configuro o Mockito para lançar uma exception ao chamar o método
+        // salvar do meu mock de LeilaoDao.
+        // E nesse caso eu não preciso especificar o leilao que será salvo,
+        // então, posso simplesmente dizer ao Mockito criar um mock qualquer,
+        // pq aqui, o importante é lançar a exceção que especifiquei no método thenThrow()
+        Mockito.when(leilaoDao.salvar(Mockito.any())).thenThrow(RuntimeException.class);
+
+        try{
+            service.finalizarLeiloesExpirados();
+
+            // Verifico se qualquer método do meu mock NÃO foi executado.
+            Mockito.verifyNoInteractions(enviadorDeEmails);
+        }catch (Exception exception){}
+    }
+
     private List<Leilao> listaDeLeiloesParaOMock(){
         List<Leilao> listaDeLeiloes = new ArrayList<>();
 
