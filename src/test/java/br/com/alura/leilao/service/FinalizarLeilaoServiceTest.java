@@ -24,10 +24,13 @@ class FinalizarLeilaoServiceTest {
     @Mock
     private LeilaoDao leilaoDao;
 
+    @Mock
+    private EnviadorDeEmails enviadorDeEmails;
+
     @BeforeEach
     public void beforeEach(){
         MockitoAnnotations.initMocks(this);
-        this.service = new FinalizarLeilaoService(leilaoDao);
+        this.service = new FinalizarLeilaoService(leilaoDao, enviadorDeEmails);
     }
 
     @Test
@@ -46,6 +49,23 @@ class FinalizarLeilaoServiceTest {
 
         // Verifico se o método do meu mock foi executado.
         Mockito.verify(leilaoDao).salvar(leilao);
+    }
+
+    @Test
+    void deveriaEnviarEmailParaVencedorDoLeilao() {
+        List<Leilao> leiloes = listaDeLeiloesParaOMock();
+        // quando o método buscarLeiloesExpirados() for chamado, então o seu retorno será
+        // a lista de leiloes que criei nessa própria classe de teste, que chamei de: listaDeLeiloesParaOMock
+        // e que atribui a variável leiloes
+        Mockito.when(leilaoDao.buscarLeiloesExpirados()).thenReturn(leiloes);
+
+        service.finalizarLeiloesExpirados();
+
+        Leilao leilao = leiloes.get(0);
+        Lance lanceVencedor = leilao.getLanceVencedor();
+
+        // Verifico se o método do meu mock foi executado.
+        Mockito.verify(enviadorDeEmails).enviarEmailVencedorLeilao(lanceVencedor);
     }
 
     private List<Leilao> listaDeLeiloesParaOMock(){
